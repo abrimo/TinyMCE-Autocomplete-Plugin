@@ -2,7 +2,7 @@ AutoComplete for TinyMCE provides inline autocomplete in a style similar to Twit
 
 ## Screenshot
 
-![Screenshot of the tinymce autocomplete plugin](http://i.imgur.com/Fv4zE.png)
+![Screenshot of the tinymce autocomplete plugin](http://i.imgur.com/riKIZ.png)
 
 ## Requirements
 Autocomplete requires TinyMCE with the jQuery package, available for download here: http://www.tinymce.com/download/download.php
