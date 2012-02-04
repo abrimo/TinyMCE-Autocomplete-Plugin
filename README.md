@@ -10,21 +10,22 @@ There are three parameters that need to be specified in your tinyMCE config:
 
 ## Configuration with TinyMCE
 
-1. Copy the autocomplete folder (in src) to the plugins directory of your TinyMCE installation.  
-2. Include the autocomplete plugin in your TinyMCE configuration, this might look like:
+Copy the autocomplete folder (in src) to the plugins directory of your TinyMCE installation.  
+
+Include the autocomplete plugin in your TinyMCE configuration, this might look like:
 ```
 plugins : "autolink,lists,pagebreak,style,layer,advlink,emotions,advlist,autocomplete",
 ```
-a
-3. Add the configuration options for the autocomplete plugin, e.g.:
+
+ Add the configuration options for the autocomplete plugin, e.g.:
 ```
 autocomplete_options: "john,jane,william", 	// Required 
 autocomplete_delimiters: "160,32",		// Optional 
 autocomplete_trigger: "@",			// Optional 
 autocomplete_end_option: "end",			// Optional 
 ```
-a
-4. Include (and customize) the CSS in src/styles/autocomplete.css on the page with your TinyMCE installation. 
+
+Include (and customize) the CSS in src/styles/autocomplete.css on the page with your TinyMCE installation. 
 
 ## Support 
 You are welcome to use this plugin at your own risk.  It is currently being maintained on GitHub where you can submit issues / feature requests. 
