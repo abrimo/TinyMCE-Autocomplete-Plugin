@@ -15,7 +15,7 @@ There are three parameters that need to be specified in your tinyMCE config:
 ```
 plugins : "autolink,lists,pagebreak,style,layer,advlink,emotions,advlist,autocomplete",
 ```
-
+a
 3. Add the configuration options for the autocomplete plugin, e.g.:
 ```
 autocomplete_options: "john,jane,william", 	// Required 
@@ -23,7 +23,7 @@ autocomplete_delimiters: "160,32",		// Optional
 autocomplete_trigger: "@",			// Optional 
 autocomplete_end_option: "end",			// Optional 
 ```
-
+a
 4. Include (and customize) the CSS in src/styles/autocomplete.css on the page with your TinyMCE installation. 
 
 ## Support 
