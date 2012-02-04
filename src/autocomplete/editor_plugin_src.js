@@ -1,7 +1,7 @@
 /**
  * editor_plugin_src.js
  * 
- * Copyright 2012, Mijura Pty Ltd Released under LGPL License.
+ * Copyright 2012, Mijura Pty. Ltd. Released under The MIT License.
  * 
  * About:
  * AutoComplete for TinyMCE provides inline autocomplete in a style similar to 
@@ -10,7 +10,7 @@
  * you will see them appear in a list underneath the caret.  
  * 
  * Configuration:
- * There are three parameters that need to be specified in your tinyMCE config:
+ * There are four parameters that need to be specified in your tinyMCE config:
  * 1\ autocomplete_delimiters - A CSV list of delimiters (ASCII codes) on which 
  * 		to split text entered into tinyMCE. In most cases you will want to 
  * 		split text by spaces, in which case you would specify '160,32'. 32 is 
