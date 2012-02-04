@@ -1,5 +1,7 @@
 AutoComplete for TinyMCE provides inline autocomplete in a style similar to Twitter or Facebook.  The text you type in tinyMCE is checked against a list of specified options; if there is a match then you will see them appear in a list underneath the caret. This plugin was originally designed for PriorityCentre, a task and meeting management application developed by Mijura (https://mijura.com).  
 
+This plugin has been tested in Firefox, Chrome, Safari and Internet Explorer 9. It currently does not support IE7/8. 
+
 ## Screenshot
 
 ![Screenshot of the tinymce autocomplete plugin](http://i.imgur.com/riKIZ.png)
