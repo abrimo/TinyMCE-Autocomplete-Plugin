@@ -13,11 +13,13 @@ There are three parameters that need to be specified in your tinyMCE config:
 Copy the autocomplete folder (in src) to the plugins directory of your TinyMCE installation.  
 
 Include the autocomplete plugin in your TinyMCE configuration, this might look like:
+
 ```
 plugins : "autolink,lists,pagebreak,style,layer,advlink,emotions,advlist,autocomplete",
 ```
 
  Add the configuration options for the autocomplete plugin, e.g.:
+
 ```
 autocomplete_options: "john,jane,william", 	// Required 
 autocomplete_delimiters: "160,32",		// Optional 
