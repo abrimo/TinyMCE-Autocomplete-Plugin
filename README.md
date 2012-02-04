@@ -1,5 +1,3 @@
-
-## About
 AutoComplete for TinyMCE provides inline autocomplete in a style similar to Twitter or Facebook.  The text you type in tinyMCE is checked against a list of specified options; if there is a match then you will see them appear in a list underneath the caret.  
 
 ## Configuration
