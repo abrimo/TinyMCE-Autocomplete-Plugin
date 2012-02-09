@@ -14,6 +14,7 @@ ul.auto-list{
 	margin:0;
 	margin-top:-24px;
 	list-style:none;
+	z-index: 1000000;
 }
 
 ul.auto-list > li:hover,
