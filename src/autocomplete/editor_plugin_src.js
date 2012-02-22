@@ -40,7 +40,23 @@
 	var ESC_KEY = 27;
 	var ENTER_KEY = 13;
 	
+	function parseOptions( param )
+	{
+		return param.options == null ? param.split(",") : param.options;
+	}
+	
 	tinymce.create('tinymce.plugins.AutoCompletePlugin', {
+				
+		setOptions : function( param )
+		{
+			autocomplete_data.options = parseOptions( param );
+		},
+		
+		getOptions : function()
+		{
+			return autocomplete_data.options;
+		},
+		
 		init : function(ed, url) {
 			
 			autocomplete_data = {
@@ -48,10 +64,11 @@
 				visible: false,
 				cancelEnter: false,
 				delimiter: ed.getParam('autocomplete_delimiters', '160,32').split(","),
-				options: ed.getParam('autocomplete_options', '').split(","),
+				options: parseOptions( ed.getParam('autocomplete_options', '') ),
 				trigger: ed.getParam('autocomplete_trigger', '@'),
 				enclosing: ed.getParam('autocomplete_end_option', '')
 			};
+			
 			
 			/**
 			 * Search for autocomplete options after text is entered and display the 
@@ -64,6 +81,7 @@
 					if (currentWord.length > 0) {
 						var wordLessTrigger = currentWord.replace(autocomplete_data.trigger,"");
 						matches = matchingOptions(wordLessTrigger);
+						
 						if (matches.length > 0) {
 							displayOptionList(matches, wordLessTrigger, ed);
 							highlightNextOption();							
@@ -126,8 +144,14 @@
 				var matchesList = "";
 				var highlightRegex = new RegExp("(" + matchedText + ")");
 
+
 				for (var i in matches) {
-					matchesList += "<li data-value='" + matches[i] + "'>" + matches[i].replace(highlightRegex,"<mark>$1</mark>") + "</li>";
+					if( matches[i].key != null ) {
+						matchesList += "<li data-value='" + matches[i].key + "'>" + matches[i].key.replace(highlightRegex,"<mark>$1</mark>") +" " + matches[i].description + "</li>";
+					}
+					else {
+						matchesList += "<li data-value='" + matches[i] + "'>" + matches[i].replace(highlightRegex,"<mark>$1</mark>") + "</li>";
+					}
 				}
 				jQuery(autocomplete_data.list).html(matchesList);
 				
@@ -266,7 +290,10 @@
 				var options = autocomplete_data.options;
 				var matches = [];
 				for (var i in options) {
-					if (currentWord.length == 0 || beginningOfWordMatches(currentWord, options[i])) {
+					if ( options[i].key == null && (currentWord.length == 0 || beginningOfWordMatches(currentWord, options[i]))) {
+						matches.push(options[i]);
+					}
+					else if( options[i].key != null && (currentWord.length == 0 || beginningOfWordMatches(currentWord, options[i].key))) {
 						matches.push(options[i]);
 					}
 				}
