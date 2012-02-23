@@ -13,7 +13,15 @@ Autocomplete requires TinyMCE with the jQuery package, available for download he
 There are four parameters that need to be specified in your tinyMCE config:
 
 1. autocomplete_delimiters - A CSV list of delimiters (ASCII codes) on which to split text entered into tinyMCE. In most cases you will want to split text by spaces, in which case you would specify '160,32'. 32 is a normal space and 160 is &amp;nbsp; (which is commonly used by tinyMCE). Whichever delimiter you specify first will be inserted after you select an option.  The default is '160,32' for spaces. 
-2. autocomplete_options - A CSV list of autocomplete options.  For example, 'john,jane,william'.    
+2. autocomplete_options - A CSV list OR Javascript Object "options". 
+   1. A CSV List like "john,jane,william"
+   2. JSON-like "options" array of objects havaing a key and a description ( both visible to user key and description, key is only used for autocomplete features ) 
+      "options": [
+                  {
+                        "key": "Attila",
+                        "description": "- The <i>Great</i> Hun"
+                  }
+               ]
 3. autocomplete_trigger -  You can specify a trigger character that must be type immediately before searching for options.  The default trigger is '@' 
 4. autocomplete_end_option - Any text that you want to be added after the option.  The caret will be placed between the option and this ending text.  For example, you could specify 'end', in which case selecting an autocomplete option would insert: '@jane  @end' with the caret placed in between (and including the trigger before the end option).
 
@@ -30,7 +38,28 @@ plugins : "autolink,lists,pagebreak,style,layer,advlink,emotions,advlist,autocom
  Add the configuration options for the autocomplete plugin, e.g.:
 
 ```
-autocomplete_options: "john,jane,william", 	// Required 
+// Required
+autocomplete_options: "john,jane,william", 
+
+OR (if you prefer showing description along the keys)
+
+autocomplete_options: {
+						"options": [
+							{
+								"key": "Attila",
+								"description": "- The <i>Great</i> Hun <hr /> <iframe src=\"http://farm4.staticflickr.com/3451/3233621766_e4f6db7a22_m.jpg\"></iframe>"
+							},
+							{
+								"key": "Kattila",
+								"description": "/ The Great B<b>um</b>"
+							},
+							{
+								"key": "JustKey",
+								"description": "* Just a <a href=\"http://twitter.com/enersizetech">link</a>"
+							}
+						]
+ 					  },
+// Optional
 autocomplete_delimiters: "160,32",		// Optional and this is the default 
 autocomplete_trigger: "@",			// Optional and this is the default
 autocomplete_end_option: "end",			// Optional and by default no ending text is inserted
