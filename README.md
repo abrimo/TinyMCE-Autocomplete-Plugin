@@ -55,7 +55,7 @@ autocomplete_options: {
 							},
 							{
 								"key": "JustKey",
-								"description": "* Just a <a href=\"http://twitter.com/enersizetech">link</a>"
+								"description": "* Just a <a href=\"http://twitter.com/enersizetech\">link</a>"
 							}
 						]
  					  },
