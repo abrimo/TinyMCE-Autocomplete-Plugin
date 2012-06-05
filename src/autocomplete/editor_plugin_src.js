@@ -65,6 +65,7 @@
 				cancelEnter: false,
 				delimiter: ed.getParam('autocomplete_delimiters', '160,32').split(","),
 				options: parseOptions( ed.getParam('autocomplete_options', '') ),
+				optionsUrl: parseOptions( ed.getParam('autocomplete_options_url', false) ),
 				trigger: ed.getParam('autocomplete_trigger', '@'),
 				enclosing: ed.getParam('autocomplete_end_option', '')
 			};
@@ -79,20 +80,68 @@
 					var currentWord = getCurrentWord(ed);
 					var matches = [];
 					if (currentWord.length > 0) {
-						var wordLessTrigger = currentWord.replace(autocomplete_data.trigger,"");
-						matches = matchingOptions(wordLessTrigger);
-						
-						if (matches.length > 0) {
-							displayOptionList(matches, wordLessTrigger, ed);
-							highlightNextOption();							
-						}
+                                                populateList(currentWord);
 					}
 					if (currentWord.length == 0 || matches.length == 0) {
 						hideOptionList();
 					}
 				}
 			}
-			
+
+
+                        /**
+                         * Populates autocomplete list with matched words.
+                         *
+                         */
+                        function populateList(currentWord) {
+                                var wordLessTrigger = currentWord.replace(autocomplete_data.trigger,"");
+
+                                if (autocomplete_data.optionsUrl) {
+                                    if (wordLessTrigger.length <= 1)
+                                        return false;
+
+                                    jQuery.ajax({
+                                        type    : "GET",
+                                        url     : autocomplete_data.optionsUrl,
+                                        cache   : false,
+                                        data    : "q=" + wordLessTrigger,
+                                        success : function(msg) {
+                                            var data = JSON.parse(msg);
+                                            //hideLoading();
+                                            if (data.ok && data.DATA) {
+                                                var options = [];
+                                                for (var i in data.DATA) {
+                                                    if (data.DATA[i].name)
+                                                        options.push(data.DATA[i].name);
+                                                }
+                                                autocomplete_data.options = options;
+
+                                                matches = matchingOptions(wordLessTrigger);
+
+                                                if (matches.length > 0) {
+                                                        displayOptionList(matches, wordLessTrigger, ed);
+                                                        highlightNextOption();
+                                                }
+                                            } else {
+                                                // No data
+                                            }
+                                        },
+                                        error   : function(jqXHR, textStatus) {
+                                            // Error
+                                        }
+                                    }); // ajax
+
+                                } else {
+                                    matches = matchingOptions(wordLessTrigger);
+
+                                    if (matches.length > 0) {
+                                            displayOptionList(matches, wordLessTrigger, ed);
+                                            highlightNextOption();
+                                    }
+                                }
+                        } // populateList
+
+
 			/**
 			 * Prevent return from adding a new line after selecting an option.  
 			 */
