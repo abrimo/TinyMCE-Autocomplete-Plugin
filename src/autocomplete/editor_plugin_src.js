@@ -32,6 +32,8 @@
  *              is ''. The default is 3.
  * 6\ autocomplete_on_select - A function to call after an option is selected.
  *              The default is false.
+ * 7\ autocomplete_on_match - A function to call when text entered match only one option.
+ *              The default is false.
  *
  * Support: 
  * You are welcome to use this plugin at your own risk.  It is currently 
@@ -44,7 +46,8 @@
 	var UP_ARROW_KEY = 38;
 	var ESC_KEY = 27;
 	var ENTER_KEY = 13;
-	
+	var SPACE_KEY = 32;
+
 	function parseOptions( param )
 	{
 		return param.options == null ? param.split(",") : param.options;
@@ -73,7 +76,8 @@
 				trigger: ed.getParam('autocomplete_trigger', '@'),
 				enclosing: ed.getParam('autocomplete_end_option', ''),
 				minLength: ed.getParam('autocomplete_min_length', '3'),
-				onSelect: ed.getParam('autocomplete_on_select', false)
+				onSelect: ed.getParam('autocomplete_on_select', false),
+				onMatch: ed.getParam('autocomplete_on_match', false)
 			};
 
 			var t = this;
@@ -85,7 +89,13 @@
 					ed.execCallback('autocomplete_on_select', ed, selected);
 				});
 			}
-			
+			if(autocomplete_data.onMatch) {
+				t.onMatch = new tinymce.util.Dispatcher(t);
+				t.onMatch.add(function(ed, match) {
+					ed.execCallback('autocomplete_on_match', ed, match);
+				});
+			}
+
 			/**
 			 * Search for autocomplete options after text is entered and display the 
 			 * option list if any matches are found. 
@@ -143,9 +153,18 @@
 						hideOptionList();
 						return tinymce.dom.Event.cancel(e);
 					}
+					// onMatch callback
+					if (autocomplete_data.onMatch && e.keyCode == SPACE_KEY) {
+						var word = getCurrentWord(ed);
+						var matches = matchingOptions(word);
+						var completeMatch = new RegExp("^"+matches[0]+"$", "i");
+						if (matches.length == 1 && word.match(completeMatch)) {
+							t.onMatch.dispatch(ed, matches[0]);
+						}
+					}
 				}
 			}
-			
+
 			function clickEvent(ed, e) {
 				hideOptionList();
 			}
