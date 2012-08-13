@@ -46,7 +46,7 @@
 	var UP_ARROW_KEY = 38;
 	var ESC_KEY = 27;
 	var ENTER_KEY = 13;
-	var SPACE_KEY = 32;
+	var END_WORD_KEYS = [32, 59, 186, 188, 190];
 
 	function parseOptions( param )
 	{
@@ -154,7 +154,7 @@
 						return tinymce.dom.Event.cancel(e);
 					}
 					// onMatch callback
-					if (autocomplete_data.onMatch && e.keyCode == SPACE_KEY) {
+					if (autocomplete_data.onMatch && END_WORD_KEYS.indexOf(e.keyCode)) {
 						var word = getCurrentWord(ed);
 						var matches = matchingOptions(word);
 						var completeMatch = new RegExp("^"+matches[0]+"$", "i");
