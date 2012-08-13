@@ -24,6 +24,9 @@ There are four parameters that need to be specified in your tinyMCE config:
                ]
 3. autocomplete_trigger -  You can specify a trigger character that must be type immediately before searching for options.  The default trigger is '@' 
 4. autocomplete_end_option - Any text that you want to be added after the option.  The caret will be placed between the option and this ending text.  For example, you could specify 'end', in which case selecting an autocomplete option would insert: '@jane  @end' with the caret placed in between (and including the trigger before the end option).
+5. autocomplete_min_length - The minimum number of characters a word needs to have before the autocomplete activates. Only active when autocomplete_trigger is ''. The default is 3.
+6. autocomplete_on_select - A function to call after an option is selected. The default is false.
+7. autocomplete_on_match - A function to call when text entered match only one option. The default is false.
 
 ## Configuration with TinyMCE
 

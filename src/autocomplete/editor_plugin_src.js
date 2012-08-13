@@ -10,7 +10,7 @@
  * you will see them appear in a list underneath the caret.  
  * 
  * Configuration:
- * There are four parameters that need to be specified in your tinyMCE config:
+ * Parameters that we can use in tinyMCE config:
  * 1\ autocomplete_delimiters - A CSV list of delimiters (ASCII codes) on which 
  * 		to split text entered into tinyMCE. In most cases you will want to 
  * 		split text by spaces, in which case you would specify '160,32'. 32 is 
@@ -27,7 +27,14 @@
  * 		text.  For example, you could specify 'end', in which case selecting 
  * 		an autocomplete option would insert: '@jane  @end' with the caret 
  * 		placed in between (and including the trigger before the end option).
- * 
+ * 5\ autocomplete_min_length - The minimum number of characters a word needs to have
+ *              before the autocomplete activates. Only active when autocomplete_trigger
+ *              is ''. The default is 3.
+ * 6\ autocomplete_on_select - A function to call after an option is selected.
+ *              The default is false.
+ * 7\ autocomplete_on_match - A function to call when text entered match only one option.
+ *              The default is false.
+ *
  * Support: 
  * You are welcome to use this plugin at your own risk.  It is currently 
  * being maintained on GitHub where you can submit issues / feature requests. 
@@ -39,7 +46,8 @@
 	var UP_ARROW_KEY = 38;
 	var ESC_KEY = 27;
 	var ENTER_KEY = 13;
-	
+	var END_WORD_KEYS = [32, 59, 186, 188, 190];
+
 	function parseOptions( param )
 	{
 		return param.options == null ? param.split(",") : param.options;
@@ -66,10 +74,28 @@
 				delimiter: ed.getParam('autocomplete_delimiters', '160,32').split(","),
 				options: parseOptions( ed.getParam('autocomplete_options', '') ),
 				trigger: ed.getParam('autocomplete_trigger', '@'),
-				enclosing: ed.getParam('autocomplete_end_option', '')
+				enclosing: ed.getParam('autocomplete_end_option', ''),
+				minLength: ed.getParam('autocomplete_min_length', '3'),
+				onSelect: ed.getParam('autocomplete_on_select', false),
+				onMatch: ed.getParam('autocomplete_on_match', false)
 			};
-			
-			
+
+			var t = this;
+
+			// Setup plugin event
+			if(autocomplete_data.onSelect) {
+				t.onSelect = new tinymce.util.Dispatcher(t);
+				t.onSelect.add(function(ed, selected) {
+					ed.execCallback('autocomplete_on_select', ed, selected);
+				});
+			}
+			if(autocomplete_data.onMatch) {
+				t.onMatch = new tinymce.util.Dispatcher(t);
+				t.onMatch.add(function(ed, match) {
+					ed.execCallback('autocomplete_on_match', ed, match);
+				});
+			}
+
 			/**
 			 * Search for autocomplete options after text is entered and display the 
 			 * option list if any matches are found. 
@@ -127,9 +153,18 @@
 						hideOptionList();
 						return tinymce.dom.Event.cancel(e);
 					}
+					// onMatch callback
+					if (autocomplete_data.onMatch && END_WORD_KEYS.indexOf(e.keyCode)) {
+						var word = getCurrentWord(ed);
+						var matches = matchingOptions(word);
+						var completeMatch = new RegExp("^"+matches[0]+"$", "i");
+						if (matches.length == 1 && word.match(completeMatch)) {
+							t.onMatch.dispatch(ed, matches[0]);
+						}
+					}
 				}
 			}
-			
+
 			function clickEvent(ed, e) {
 				hideOptionList();
 			}
@@ -256,6 +291,13 @@
 					ed.selection.moveToBookmark(middleBookmark);					
 				}
 				hideOptionList();
+
+				// onSelect callback
+				if (autocomplete_data.onSelect) {
+					t.onSelect.dispatch(ed, current);
+				}
+				hideOptionList();
+
 			}
 			
 			/**
@@ -301,7 +343,8 @@
 			}
 			
 			function beginningOfWordMatches(beginning, option) {
-				return (option.match("^" + beginning) == beginning);
+				var test = new RegExp("^"+beginning, "i");
+				return (option.match(test));
 			}
 
 			/**
@@ -321,10 +364,17 @@
 					}
 				}
 				var word = nodeText.substr(lastDelimiter, positionInNode-lastDelimiter);
-				if (word.length > 0 && word.charAt(0).toString() == autocomplete_data.trigger) {
-					return word;
+				var retWord = "";
+				if(autocomplete_data.trigger == '') {
+					if (word.length >= autocomplete_data.minLength) {
+						retWord = word;
+					}
+				} else {
+					if (word.length > 0 && word.charAt(0).toString() == autocomplete_data.trigger) {
+						retWord = word;
+					}
 				}
-				return "";
+				return retWord;
 			}
 
 			ed.onKeyUp.addToTop(keyUpEvent);
