@@ -191,7 +191,7 @@
 					if (e.keyCode == ENTER_KEY) {
 						selectOption(ed, getCurrentWord(ed));
 						autocomplete_data.cancelEnter = true;
-						return; // the enter evet needs to be cancelled on keypress so 
+						return false; // the enter evet needs to be cancelled on keypress so 
 						// it doesn't register a carriage return
 					}
 					if (e.keyCode == ESC_KEY) {
@@ -327,7 +327,7 @@
 				if (autocomplete_data.delimiter.length > 0) {
 					delim = String.fromCharCode(autocomplete_data.delimiter[0]);
 				}
-				ed.selection.setContent(autocomplete_data.trigger + current.text() + delim);
+				ed.selection.setContent(autocomplete_data.trigger + current.toString() + delim);
 
 				// insert the enclosing text if it has not already been added
 				if (autocomplete_data.enclosing.length > 0 && !closingTextExists(content, currentNode)) {
