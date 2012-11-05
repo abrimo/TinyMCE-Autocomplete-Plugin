@@ -1,4 +1,51 @@
-AutoComplete for TinyMCE provides inline autocomplete in a style similar to Twitter or Facebook.  The text you type in tinyMCE is checked against a list of specified options; if there is a match then you will see them appear in a list underneath the caret. This plugin was originally designed for PriorityCentre, a task and meeting management application developed by Mijura (https://mijura.com).  
+This fork merged all other known forks into one. Then all noticed bugs were fixed to work with recent JQuery (1.8.2).
+
+This plugin now has: Ajax and all words completion support (not only the ones preceding with '@' or some other character).
+
+Example code for .NET MVC 3 controller method for getting Ajax autocompletion words list:
+```
+		public JsonResult GetWordCompletion(string q)
+		{
+				var jsonObj = new
+				{
+					ok = 1,
+					DATA = new List<object>
+						{
+							new { name = "autocomplete item 1" },
+							new { name = "autocomplete item 2" },
+							new { name = "autocomplete item 3" }
+						},
+					ERRORS = new int[0]
+				};
+
+			return Json(jsonObj, JsonRequestBehavior.AllowGet);
+		}
+```
+
+Below you can find original readme...
+			
+AJAX AutoComplete for TinyMCE provides inline autocomplete in a style similar to Twitter or Facebook.  The text you type in tinyMCE is checked against a list of specified options; if there is a match then you will see them appear in a list underneath the caret. This plugin was originally designed for PriorityCentre, a task and meeting management application developed by Mijura (https://mijura.com).  
+
+This fork has been updated to provide generation of autocomplete list on-the-fly with AJAX. Use at your own risk. Also you can visit my page: http://www.sib.li :-)
+
+Server should return data in this format:
+```
+{
+	"ok":1,
+	"DATA":
+	[
+		{"name":"autocomplete item 1"},
+		{"name":"autocomplete item 2"},
+		{"name":"autocomplete item 3"}
+	],
+	"ERRORS":[]
+}
+```
+
+To configure use autocomplete_options_url setting (without autocomplete_options):
+```
+autocomplete_options_url: "/path/to/my/ajax.php",
+```
 
 This plugin has been tested in Firefox, Chrome, Safari and Internet Explorer 9. It currently does not support IE7/8. 
 
@@ -24,6 +71,9 @@ There are four parameters that need to be specified in your tinyMCE config:
                ]
 3. autocomplete_trigger -  You can specify a trigger character that must be type immediately before searching for options.  The default trigger is '@' 
 4. autocomplete_end_option - Any text that you want to be added after the option.  The caret will be placed between the option and this ending text.  For example, you could specify 'end', in which case selecting an autocomplete option would insert: '@jane  @end' with the caret placed in between (and including the trigger before the end option).
+5. autocomplete_min_length - The minimum number of characters a word needs to have before the autocomplete activates. Only active when autocomplete_trigger is ''. The default is 3.
+6. autocomplete_on_select - A function to call after an option is selected. The default is false.
+7. autocomplete_on_match - A function to call when text entered match only one option. The default is false.
 
 ## Configuration with TinyMCE
 
