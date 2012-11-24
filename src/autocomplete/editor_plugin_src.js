@@ -10,7 +10,7 @@
  * you will see them appear in a list underneath the caret.  
  * 
  * Configuration:
- * There are four parameters that need to be specified in your tinyMCE config:
+ * Parameters that we can use in tinyMCE config:
  * 1\ autocomplete_delimiters - A CSV list of delimiters (ASCII codes) on which 
  * 		to split text entered into tinyMCE. In most cases you will want to 
  * 		split text by spaces, in which case you would specify '160,32'. 32 is 
@@ -27,49 +27,73 @@
  * 		text.  For example, you could specify 'end', in which case selecting 
  * 		an autocomplete option would insert: '@jane  @end' with the caret 
  * 		placed in between (and including the trigger before the end option).
- * 
+ * 5\ autocomplete_min_length - The minimum number of characters a word needs to have
+ *              before the autocomplete activates. Only active when autocomplete_trigger
+ *              is ''. The default is 3.
+ * 6\ autocomplete_on_select - A function to call after an option is selected.
+ *              The default is false.
+ * 7\ autocomplete_on_match - A function to call when text entered match only one option.
+ *              The default is false.
+ *
  * Support: 
  * You are welcome to use this plugin at your own risk.  It is currently 
  * being maintained on GitHub where you can submit issues / feature requests. 
  */
 
-(function() {
+(function () {
 	var autocomplete_data = {};
 	var DOWN_ARROW_KEY = 40;
 	var UP_ARROW_KEY = 38;
 	var ESC_KEY = 27;
 	var ENTER_KEY = 13;
-	
-	function parseOptions( param )
-	{
-		return param.options == null ? param.split(",") : param.options;
+	var END_WORD_KEYS = [32, 59, 186, 188, 190];
+
+	function parseOptions(param) {
+		return param.options == null && typeof param != "boolean" ? param.split(",") : param.options;
 	}
-	
+
 	tinymce.create('tinymce.plugins.AutoCompletePlugin', {
-				
-		setOptions : function( param )
-		{
-			autocomplete_data.options = parseOptions( param );
+
+		setOptions: function (param) {
+			autocomplete_data.options = parseOptions(param);
 		},
-		
-		getOptions : function()
-		{
+
+		getOptions: function () {
 			return autocomplete_data.options;
 		},
-		
-		init : function(ed, url) {
-			
+
+		init: function (ed, url) {
+
 			autocomplete_data = {
 				list: createOptionList(),
 				visible: false,
 				cancelEnter: false,
 				delimiter: ed.getParam('autocomplete_delimiters', '160,32').split(","),
-				options: parseOptions( ed.getParam('autocomplete_options', '') ),
+				options: parseOptions(ed.getParam('autocomplete_options', '')),
+				optionsUrl: parseOptions(ed.getParam('autocomplete_options_url', false)),
 				trigger: ed.getParam('autocomplete_trigger', '@'),
-				enclosing: ed.getParam('autocomplete_end_option', '')
+				enclosing: ed.getParam('autocomplete_end_option', ''),
+				minLength: ed.getParam('autocomplete_min_length', '3'),
+				onSelect: ed.getParam('autocomplete_on_select', false),
+				onMatch: ed.getParam('autocomplete_on_match', false)
 			};
-			
-			
+
+			var t = this;
+
+			// Setup plugin event
+			if (autocomplete_data.onSelect) {
+				t.onSelect = new tinymce.util.Dispatcher(t);
+				t.onSelect.add(function (ed, selected) {
+					ed.execCallback('autocomplete_on_select', ed, selected);
+				});
+			}
+			if (autocomplete_data.onMatch) {
+				t.onMatch = new tinymce.util.Dispatcher(t);
+				t.onMatch.add(function (ed, match) {
+					ed.execCallback('autocomplete_on_match', ed, match);
+				});
+			}
+
 			/**
 			 * Search for autocomplete options after text is entered and display the 
 			 * option list if any matches are found. 
@@ -77,22 +101,69 @@
 			function keyUpEvent(ed, e) {
 				if ((!autocomplete_data.visible && e.keyCode != ESC_KEY && e.keyCode != ENTER_KEY) || (e.keyCode != DOWN_ARROW_KEY && e.keyCode != UP_ARROW_KEY && e.keyCode != ENTER_KEY && e.keyCode != ESC_KEY)) {
 					var currentWord = getCurrentWord(ed);
-					var matches = [];
+					var matches = matchingOptions(currentWord);
 					if (currentWord.length > 0) {
-						var wordLessTrigger = currentWord.replace(autocomplete_data.trigger,"");
-						matches = matchingOptions(wordLessTrigger);
-						
-						if (matches.length > 0) {
-							displayOptionList(matches, wordLessTrigger, ed);
-							highlightNextOption();							
-						}
+						populateList(currentWord);
 					}
 					if (currentWord.length == 0 || matches.length == 0) {
 						hideOptionList();
 					}
 				}
 			}
-			
+
+
+			/**
+			 * Populates autocomplete list with matched words.
+			 *
+			 */
+			function populateList(currentWord) {
+				var wordLessTrigger = currentWord.replace(autocomplete_data.trigger, "");
+
+				if (autocomplete_data.optionsUrl) {
+					if (wordLessTrigger.length <= 1)
+						return false;
+
+					jQuery.ajax({
+						type: "GET",
+						url: autocomplete_data.optionsUrl,
+						cache: false,
+						data: "q=" + wordLessTrigger,
+						success: function (data) {
+							//hideLoading();
+							if (data.ok && data.DATA) {
+								var options = [];
+								for (var i in data.DATA) {
+									if (data.DATA[i].name)
+										options.push(data.DATA[i].name);
+								}
+								autocomplete_data.options = options;
+
+								matches = matchingOptions(wordLessTrigger);
+
+								if (matches.length > 0) {
+									displayOptionList(matches, wordLessTrigger, ed);
+									highlightNextOption();
+								}
+							} else {
+								// No data
+							}
+						},
+						error: function (jqXHR, textStatus) {
+							// Error
+						}
+					}); // ajax
+
+				} else {
+					matches = matchingOptions(wordLessTrigger);
+
+					if (matches.length > 0) {
+						displayOptionList(matches, wordLessTrigger, ed);
+						highlightNextOption();
+					}
+				}
+			} // populateList
+
+
 			/**
 			 * Prevent return from adding a new line after selecting an option.  
 			 */
@@ -102,7 +173,7 @@
 					return tinymce.dom.Event.cancel(e);
 				}
 			}
-			
+
 			/**
 			 * Handle navigation inside the option list when it is visible.  
 			 * These events should not propagate to the editor. 
@@ -120,16 +191,25 @@
 					if (e.keyCode == ENTER_KEY) {
 						selectOption(ed, getCurrentWord(ed));
 						autocomplete_data.cancelEnter = true;
-						return; // the enter evet needs to be cancelled on keypress so 
-								// it doesn't register a carriage return
+						return false; // the enter evet needs to be cancelled on keypress so 
+						// it doesn't register a carriage return
 					}
 					if (e.keyCode == ESC_KEY) {
 						hideOptionList();
 						return tinymce.dom.Event.cancel(e);
 					}
+					// onMatch callback
+					if (autocomplete_data.onMatch && END_WORD_KEYS.indexOf(e.keyCode)) {
+						var word = getCurrentWord(ed);
+						var matches = matchingOptions(word);
+						var completeMatch = new RegExp("^" + matches[0] + "$", "i");
+						if (matches.length == 1 && word.match(completeMatch)) {
+							t.onMatch.dispatch(ed, matches[0]);
+						}
+					}
 				}
 			}
-			
+
 			function clickEvent(ed, e) {
 				hideOptionList();
 			}
@@ -146,15 +226,15 @@
 
 
 				for (var i in matches) {
-					if( matches[i].key != null ) {
-						matchesList += "<li data-value='" + matches[i].key + "'>" + matches[i].key.replace(highlightRegex,"<mark>$1</mark>") +" " + matches[i].description + "</li>";
+					if (matches[i].key != null) {
+						matchesList += "<li data-value='" + matches[i].key + "'>" + matches[i].key.replace(highlightRegex, "<mark>$1</mark>") + " " + matches[i].description + "</li>";
 					}
 					else {
-						matchesList += "<li data-value='" + matches[i] + "'>" + matches[i].replace(highlightRegex,"<mark>$1</mark>") + "</li>";
+						matchesList += "<li data-value='" + matches[i] + "'>" + matches[i].replace(highlightRegex, "<mark>$1</mark>") + "</li>";
 					}
 				}
 				jQuery(autocomplete_data.list).html(matchesList);
-				
+
 				// work out the position of the caret
 				var tinymcePosition = jQuery(ed.getContainer()).position();
 				var toolbarPosition = jQuery(ed.getContainer()).find(".mceToolbar").first();
@@ -168,58 +248,58 @@
 					textareaTop = parseInt(jQuery(ed.selection.getNode()).css("font-size")) * 1.3 + nodePosition.top;
 					textareaLeft = nodePosition.left;
 				}
-				
+
 				jQuery(autocomplete_data.list).css("margin-top", tinymcePosition.top + toolbarPosition.innerHeight() + textareaTop);
 				jQuery(autocomplete_data.list).css("margin-left", tinymcePosition.left + textareaLeft);
 				jQuery(autocomplete_data.list).css("display", "block");
 				autocomplete_data.visible = true;
 				optionListEventHandlers(ed);
 			}
-			
+
 			/**
 			 * Allow a user to select an option by clicking with the mouse and 
 			 * highlighting the options on hover. 
 			 */
 			function optionListEventHandlers(ed) {
-				jQuery(autocomplete_data.list).find("li").hover(function() {
-					jQuery(autocomplete_data.list).find("[data-selected=true]").attr("data-selected","false");
-					jQuery(this).attr("data-selected","true");
+				jQuery(autocomplete_data.list).find("li").hover(function () {
+					jQuery(autocomplete_data.list).find("[data-selected=true]").attr("data-selected", "false");
+					jQuery(this).attr("data-selected", "true");
 				});
-				jQuery(autocomplete_data.list).find("li").click(function() {
+				jQuery(autocomplete_data.list).find("li").click(function () {
 					selectOption(ed, getCurrentWord(ed));
 				});
 			}
-			
+
 			function createOptionList() {
 				var ulContainer = document.createElement("ul");
 				jQuery(ulContainer).addClass("auto-list");
 				document.body.appendChild(ulContainer);
 				return ulContainer;
 			}
-			
+
 			function hideOptionList() {
 				jQuery(autocomplete_data.list).css("display", "none");
 				autocomplete_data.visible = false;
 			}
-			
+
 			function highlightNextOption() {
 				var current = jQuery(autocomplete_data.list).find("[data-selected=true]");
 				if (current.size() == 0 || current.next().size() == 0) {
-					jQuery(autocomplete_data.list).find("li:first-child").attr("data-selected","true");
+					jQuery(autocomplete_data.list).find("li:first-child").attr("data-selected", "true");
 				} else {
-					current.next().attr("data-selected","true");
+					current.next().attr("data-selected", "true");
 				}
-				current.attr("data-selected","false");
+				current.attr("data-selected", "false");
 			}
-			
+
 			function highlightPreviousOption() {
 				var current = jQuery(autocomplete_data.list).find("[data-selected=true]");
 				if (current.size() == 0 || current.prev().size() == 0) {
-					jQuery(autocomplete_data.list).find("li:last-child").attr("data-selected","true");
+					jQuery(autocomplete_data.list).find("li:last-child").attr("data-selected", "true");
 				} else {
-					current.prev().attr("data-selected","true");
+					current.prev().attr("data-selected", "true");
 				}
-				current.attr("data-selected","false");
+				current.attr("data-selected", "false");
 			}
 
 			/**
@@ -233,44 +313,50 @@
 				if (current == null) {
 					current = jQuery(autocomplete_data.list).find("li:first-child").attr("data-value");
 				}
-				
-				var content = restOfContent(ed.selection.getSel().anchorNode,"");
+
+				var content = restOfContent(ed.selection.getSel().anchorNode, "");
 				var currentNode = ed.selection.getSel().anchorNode.textContent;
-				
+
 				// modify the range to replace overwrite the option text that has already been entered
 				var range = ed.selection.getRng();
 				range.setStart(range.startContainer, range.startOffset - matchedText.length);
 				ed.selection.setRng(range);
-				
+
 				// insert the trigger, selected option and following delimiter 
 				var delim = "";
 				if (autocomplete_data.delimiter.length > 0) {
 					delim = String.fromCharCode(autocomplete_data.delimiter[0]);
 				}
-				ed.selection.setContent(autocomplete_data.trigger + current + delim);
-				
+				ed.selection.setContent(autocomplete_data.trigger + current.toString() + delim);
+
 				// insert the enclosing text if it has not already been added
 				if (autocomplete_data.enclosing.length > 0 && !closingTextExists(content, currentNode)) {
 					var middleBookmark = ed.selection.getBookmark();
 					ed.selection.setContent(delim + autocomplete_data.trigger + autocomplete_data.enclosing);
-					ed.selection.moveToBookmark(middleBookmark);					
+					ed.selection.moveToBookmark(middleBookmark);
+				}
+				hideOptionList();
+
+				// onSelect callback
+				if (autocomplete_data.onSelect) {
+					t.onSelect.dispatch(ed, current);
 				}
 				hideOptionList();
 			}
-			
+
 			/**
 			 * Check if the enclosing string has already been placed past the current node.  
 			 */
 			function closingTextExists(content, currentNode) {
 				var enclosed = autocomplete_data.trigger + autocomplete_data.enclosing;
 				content = content.substr(currentNode.length);
-				var matches = new RegExp(autocomplete_data.trigger + ".{" + autocomplete_data.enclosing.length + "}","g").exec(content);
+				var matches = new RegExp(autocomplete_data.trigger + ".{" + autocomplete_data.enclosing.length + "}", "g").exec(content);
 				if (matches != null && matches.length > 0 && matches[0] == enclosed) {
 					return true;
 				}
 				return false;
 			}
-			
+
 			/**
 			 * Recursively find all of the content past (and including) the caret node. 
 			 * This doesn't appear to be available any other way.  
@@ -280,9 +366,9 @@
 				if (anchorNode.nextSibling != null) {
 					return restOfContent(anchorNode.nextSibling, content);
 				}
-				return content; 
+				return content;
 			}
-			
+
 			/**
 			 * Find all options whose beginning matches the currently entered text. 
 			 */
@@ -290,18 +376,19 @@
 				var options = autocomplete_data.options;
 				var matches = [];
 				for (var i in options) {
-					if ( options[i].key == null && (currentWord.length == 0 || beginningOfWordMatches(currentWord, options[i]))) {
+					if (options[i].key == null && (currentWord.length == 0 || beginningOfWordMatches(currentWord, options[i]))) {
 						matches.push(options[i]);
 					}
-					else if( options[i].key != null && (currentWord.length == 0 || beginningOfWordMatches(currentWord, options[i].key))) {
+					else if (options[i].key != null && (currentWord.length == 0 || beginningOfWordMatches(currentWord, options[i].key))) {
 						matches.push(options[i]);
 					}
 				}
 				return matches;
 			}
-			
+
 			function beginningOfWordMatches(beginning, option) {
-				return (option.match("^" + beginning) == beginning);
+				var test = new RegExp("^" + beginning, "i");
+				return (option.match(test));
 			}
 
 			/**
@@ -317,14 +404,21 @@
 				var lastDelimiter = 0;
 				for (var i = 0; i < positionInNode; i++) {
 					if (autocomplete_data.delimiter.indexOf(nodeText.charCodeAt(i).toString()) != -1) {
-						lastDelimiter = i+1;
+						lastDelimiter = i + 1;
 					}
 				}
-				var word = nodeText.substr(lastDelimiter, positionInNode-lastDelimiter);
-				if (word.length > 0 && word.charAt(0).toString() == autocomplete_data.trigger) {
-					return word;
+				var word = nodeText.substr(lastDelimiter, positionInNode - lastDelimiter);
+				var retWord = "";
+				if (autocomplete_data.trigger == '') {
+					if (word.length >= autocomplete_data.minLength) {
+						retWord = word;
+					}
+				} else {
+					if (word.length > 0 && word.charAt(0).toString() == autocomplete_data.trigger) {
+						retWord = word;
+					}
 				}
-				return "";
+				return retWord;
 			}
 
 			ed.onKeyUp.addToTop(keyUpEvent);
@@ -333,13 +427,13 @@
 			ed.onClick.add(clickEvent);
 		},
 
-		getInfo : function() {
+		getInfo: function () {
 			return {
-				longname : 'AutoComplete',
-				author : 'Mijura Pty Ltd',
-				authorurl : 'http://mijura.com',
-				infourl : 'http://blog.mijura.com',
-				version : tinymce.majorVersion + "." + tinymce.minorVersion
+				longname: 'AutoComplete',
+				author: 'Mijura Pty Ltd',
+				authorurl: 'http://mijura.com',
+				infourl: 'http://blog.mijura.com',
+				version: tinymce.majorVersion + "." + tinymce.minorVersion
 			};
 		}
 	});
