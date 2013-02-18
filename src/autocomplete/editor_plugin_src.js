@@ -70,7 +70,7 @@
 				cancelEnter: false,
 				delimiter: ed.getParam('autocomplete_delimiters', '160,32').split(","),
 				options: parseOptions(ed.getParam('autocomplete_options', '')),
-				optionsUrl: parseOptions(ed.getParam('autocomplete_options_url', false)),
+				optionsUrl: ed.getParam('autocomplete_options_url', false), /*parseOptions(ed.getParam('autocomplete_options_url', false)) return ["myurl"]*/
 				trigger: ed.getParam('autocomplete_trigger', '@'),
 				enclosing: ed.getParam('autocomplete_end_option', ''),
 				minLength: ed.getParam('autocomplete_min_length', '3'),
