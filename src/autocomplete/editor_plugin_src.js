@@ -67,7 +67,6 @@
 			autocomplete_data = {
 				list: createOptionList(),
 				visible: false,
-				cancelEnter: false,
 				delimiter: ed.getParam('autocomplete_delimiters', '160,32').split(","),
 				options: parseOptions(ed.getParam('autocomplete_options', '')),
 				optionsUrl: parseOptions(ed.getParam('autocomplete_options_url', false)),
@@ -101,7 +100,6 @@
 			function keyUpEvent(ed, e) {
 				if ((!autocomplete_data.visible && e.keyCode != ESC_KEY && e.keyCode != ENTER_KEY) || (e.keyCode != DOWN_ARROW_KEY && e.keyCode != UP_ARROW_KEY && e.keyCode != ENTER_KEY && e.keyCode != ESC_KEY)) {
 					var currentWord = getCurrentWord(ed);
-					var matches = matchingOptions(currentWord);
 					if (currentWord.length > 0) {
 						populateList(currentWord);
 					}
@@ -163,17 +161,6 @@
 				}
 			} // populateList
 
-
-			/**
-			 * Prevent return from adding a new line after selecting an option.  
-			 */
-			function keyPressEvent(ed, e) {
-				if (e.keyCode == ENTER_KEY && autocomplete_data.cancelEnter) {
-					autocomplete_data.cancelEnter = false;
-					return tinymce.dom.Event.cancel(e);
-				}
-			}
-
 			/**
 			 * Handle navigation inside the option list when it is visible.  
 			 * These events should not propagate to the editor. 
@@ -190,10 +177,8 @@
 					}
 					if (e.keyCode == ENTER_KEY) {
 						selectOption(ed, getCurrentWord(ed));
-						autocomplete_data.cancelEnter = true;
-						return false; // the enter evet needs to be cancelled on keypress so 
-						// it doesn't register a carriage return
-					}
+						return tinymce.dom.Event.cancel(e);
+                    }
 					if (e.keyCode == ESC_KEY) {
 						hideOptionList();
 						return tinymce.dom.Event.cancel(e);
@@ -421,10 +406,9 @@
 				return retWord;
 			}
 
-			ed.onKeyUp.addToTop(keyUpEvent);
-			ed.onKeyDown.addToTop(keyDownEvent);
-			ed.onKeyPress.addToTop(keyPressEvent);
-			ed.onClick.add(clickEvent);
+			ed.on('keyup', function (e) { keyUpEvent(ed, e) });
+			ed.on('keydown', function (e) { keyDownEvent(ed, e) });
+			ed.on('click', function (e) { clickEvent(ed, e) });
 		},
 
 		getInfo: function () {
