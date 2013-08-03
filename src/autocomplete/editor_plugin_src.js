@@ -2,7 +2,6 @@
  * editor_plugin_src.js
  * 
  * Copyright 2012, Mijura Pty. Ltd. Released under The MIT License.
- * Modified by QASymphony, Inc.
  * 
  * About:
  * AutoComplete for TinyMCE provides inline autocomplete in a style similar to 
