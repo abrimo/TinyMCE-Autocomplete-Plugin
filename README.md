@@ -1,3 +1,76 @@
+This fork improves the method to calculate the caret's current position so that the suggestion list can work as expected on IE, Firefox, and Chrome.
+Also the suggested options as well as their labels are retrieved via callback functions in order to increase the flexibility.
+
+Example code:
+```
+$(document).ready(function() {
+
+  var autocomplete_options = [
+    {
+      homepage: 'http://google.com',
+      fullname: 'Google Inc.',
+      description: 'Google'
+    },
+    {
+      homepage: 'http://google.com',
+      fullname: ' GitHub Inc.',
+      description: 'GitHub'
+    },
+    {
+      homepage: 'http://yahoo.com',
+      fullname: 'Yahoo Inc.',
+      description: 'Yahoo'
+    },
+    {
+      homepage: 'http://yelp.com',
+      fullname: 'Yelp Inc.',
+      description: 'Yelp'
+    },
+    {
+      homepage: 'http://microsoft.com',
+      fullname: 'Microsoft Inc.',
+      description: 'Microsoft'
+    }
+  ];
+
+  var matchingOptions = function(currentWord) {
+    var matches = [];
+    for (var i in autocomplete_options) {
+      var option = autocomplete_options[i];
+      if (currentWord.length == 0 || beginningOfWordMatches(currentWord, option.description)) {
+        matches.push(option);
+      }
+    }
+    return matches;
+  };
+
+  var beginningOfWordMatches = function(beginning, option) {
+    var test = new RegExp("^" + beginning, "i");
+    return (option.match(test));
+  };
+
+  var asString = function(value) {
+    var a = $('<a/>', { href: value.homepage }).text(value.fullname);
+    return $('<div/>').append(a).html();
+  };
+
+  $('.tinymce').tinymce({
+    theme : 'advanced',
+    plugins : 'autocomplete',
+
+    theme_advanced_buttons1 : '',
+    theme_advanced_toolbar_location : 'top',
+    theme_advanced_toolbar_align : 'left',
+    theme_advanced_statusbar_location : 'none',
+
+    autocomplete_matching_options: matchingOptions,
+    autocomplete_as_string: asString
+  });
+});
+```
+
+Below you can find original readme...
+
 This fork merged all other known forks into one. Then all noticed bugs were fixed to work with recent JQuery (1.8.2).
 
 This plugin now has: Ajax and all words completion support (not only the ones preceding with '@' or some other character).
